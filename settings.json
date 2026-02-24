@@ -40,6 +40,16 @@
       "image": "/api/placeholder/800/200",
       "items": [
         {
+          "name": "YouTube Downloader",
+          "desc": "Download YouTube video atau audio",
+          "path": "/download/yt?url=&type=video",
+          "status": "ready",
+          "params": {
+            "url": "URL Video YouTube",
+            "type": "video atau audio"
+          }
+        },
+        {
           "name": "Aio",
           "desc": "All in downloader",
           "path": "/download/aio?url=",
@@ -228,16 +238,6 @@
             "url": "URL video Videy"
           }
         }, 
-        {
-          "name": "YouTube Downloader",
-          "desc": "Download YouTube video atau audio MP3",
-          "path": "/download/yt?url=&type=",
-          "status": "ready",
-          "params": {
-            "url": "URL Video YouTube",
-            "type": "video atau audio"
-          }
-        },
         {
           "name": "Doodstream",
           "desc": "Downloader doodstream",
