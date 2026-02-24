@@ -229,6 +229,16 @@
           }
         }, 
         {
+          "name": "YouTube Downloader",
+          "desc": "Download YouTube video atau audio MP3",
+          "path": "/download/yt?url=&type=",
+          "status": "ready",
+          "params": {
+            "url": "URL Video YouTube",
+            "type": "video atau audio"
+          }
+        },
+        {
           "name": "Doodstream",
           "desc": "Downloader doodstream",
           "path": "/download/doodstream?url=",
