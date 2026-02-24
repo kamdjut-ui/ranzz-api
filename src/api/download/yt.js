@@ -36,7 +36,7 @@ async function ytdown(url, type = 'video') {
 }
 
 module.exports = function (app) {
-    app.get('/download/ytmp4', async (req, res) => {
+    app.get('/download/yt', async (req, res) => {
         const { url, type = 'video' } = req.query;
         
         if (!url) return res.json({ 
