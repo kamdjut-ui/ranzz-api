@@ -1,49 +1,65 @@
 const axios = require('axios');
 
 async function ytdown(url, type = 'video') {
-    const { data } = await axios.post('https://app.ytdown.to/proxy.php', 
-        new URLSearchParams({ url }), 
-        { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }
-    );
+    try {
+        const { data } = await axios.post('https://app.ytdown.to/proxy.php', 
+            new URLSearchParams({ url }), 
+            { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }
+        );
 
-    const api = data.api;
-    if (api?.status == 'ERROR') throw new Error(api.message);
+        const api = data.api;
+        if (api?.status == 'ERROR') throw new Error(api.message);
 
-    const media = api?.mediaItems?.find((m) => m.type.toLowerCase() === type.toLowerCase());
-    if (!media) throw new Error('Media type not found');
+        // Mencari tipe media yang sesuai (video/audio)
+        const media = api?.mediaItems?.find((m) => m.type.toLowerCase() === type.toLowerCase());
+        if (!media) throw new Error(`Tipe media '${type}' tidak ditemukan.`);
 
-    let attempts = 0;
-    while (attempts < 15) {
-        const { data: res } = await axios.get(media.mediaUrl);
-        if (res?.error === 'METADATA_NOT_FOUND') throw new Error('Metadata not found');
+        // Polling loop untuk mendapatkan link final
+        let attempts = 0;
+        const maxAttempts = 15; // Maksimal 75 detik agar tidak melampaui timeout Vercel
 
-        if (res?.percent === 'Completed' && res?.fileUrl !== 'In Processing...') {
-            return {
-                title: api.title,
-                thumbnail: api.imagePreviewUrl,
-                uploader: api.userInfo?.name,
-                quality: media.mediaQuality,
-                extension: media.mediaExtension,
-                size: media.mediaFileSize,
-                duration: media.mediaDuration,
-                download: res.fileUrl
-            };
+        while (attempts < maxAttempts) {
+            const { data: res } = await axios.get(media.mediaUrl);
+
+            if (res?.error === 'METADATA_NOT_FOUND') throw new Error('Metadata video tidak ditemukan.');
+
+            if (res?.percent === 'Completed' && res?.fileUrl && res.fileUrl !== 'In Processing...') {
+                return {
+                    title: api.title,
+                    description: api.description,
+                    thumbnail: api.imagePreviewUrl,
+                    views: api.mediaStats?.viewsCount,
+                    uploader: api.userInfo?.name,
+                    quality: media.mediaQuality,
+                    duration: media.mediaDuration,
+                    extension: media.mediaExtension,
+                    size: media.mediaFileSize,
+                    download: res.fileUrl
+                };
+            }
+
+            attempts++;
+            // Menunggu 5 detik sebelum cek lagi
+            await new Promise(resolve => setTimeout(resolve, 5000));
         }
-        attempts++;
-        await new Promise(r => setTimeout(r, 5000));
+
+        throw new Error('Proses server terlalu lama, silakan coba lagi.');
+    } catch (error) {
+        throw error;
     }
-    throw new Error('Timeout: Gagal mendapatkan link download.');
 }
 
 module.exports = function (app) {
     app.get('/download/yt', async (req, res) => {
         const { url, type = 'video' } = req.query;
-        
-        if (!url) return res.json({ 
-            status: false, 
-            creator: "Ranzz", 
-            message: "Masukkan parameter URL!" 
-        });
+
+        if (!url) {
+            return res.status(400).json({
+                status: false,
+                creator: "Ranzz",
+                message: "Masukkan parameter URL YouTube!"
+            });
+        }
 
         try {
             const results = await ytdown(url, type);
@@ -56,7 +72,7 @@ module.exports = function (app) {
             res.status(500).json({
                 status: false,
                 creator: "Ranzz",
-                message: error.message
+                message: error.message || "Terjadi kesalahan internal."
             });
         }
     });
